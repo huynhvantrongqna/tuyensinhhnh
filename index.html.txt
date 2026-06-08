@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Tuyển sinh 10 - THPT Huỳnh Ngọc Huệ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-gradient-to-r align-middle from-blue-700 to-indigo-800 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="text-center md:text-left">
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">TRƯỜNG THPT HUỲNH NGỌC HUỆ</h1>
+                <p class="text-blue-100 text-sm mt-1">Hệ thống đăng ký & lọc nguyện vọng tổ hợp môn - Lớp 10</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="switchTab('register')" id="btn-tab-register" class="px-5 py-2.5 rounded-lg font-medium bg-white text-blue-700 shadow-sm transition-all">
+                    📍 Đăng ký Tuyển sinh
+                </button>
+                <button onclick="switchTab('admin')" id="btn-tab-admin" class="px-5 py-2.5 rounded-lg font-medium bg-blue-600 hover:bg-blue-500 text-white transition-all">
+                    🔑 Cổng Quản trị (Admin)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        
+        <section id="section-register" class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden">
+                <div class="bg-slate-900 px-6 py-4 text-white">
+                    <h3 class="text-lg font-semibold">Đơn Đăng Ký Nguyện Vọng Trực Tuyến</h3>
+                </div>
+                
+                <form id="studentForm" onsubmit="handleSingleRegister(event)" class="p-6 md:p-8 space-y-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg text-sm text-blue-800">
+                        <strong>Lưu ý:</strong> Thí sinh phải điền đầy đủ Họ tên, Giới tính, Ngày sinh, CCCD và Điểm số mới có thể gửi form.
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Họ và tên <span class="text-red-500">*</span></label>
+                            <input type="text" id="fullname" required placeholder="Ví dụ: Nguyễn Văn A" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Số CCCD / Mã định danh <span class="text-red-500">*</span></label>
+                            <input type="text" id="cccd" required placeholder="Nhập đủ 12 số" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Ngày tháng năm sinh <span class="text-red-500">*</span></label>
+                            <input type="date" id="dob" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Giới tính <span class="text-red-500">*</span></label>
+                            <select id="gender" required class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white">
+                                <option value="">-- Chọn Giới tính --</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Điểm xét tuyển tuyển sinh 10 <span class="text-red-500">*</span></label>
+                            <input type="number" id="score" step="0.01" min="0" max="50" required placeholder="Nhập tổng điểm xét tuyển (VD: 42.5)" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <hr class="border-slate-200 my-6">
+
+                    <div>
+                        <h4 class="text-md font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <span>📚</span> Thứ tự nguyện vọng tổ hợp môn (Từ cao xuống thấp)
+                        </h4>
+                        <p class="text-xs text-slate-500 mb-4">Vui lòng chọn đủ 6 nguyện vọng khác nhau để tối ưu hóa cơ hội xét tuyển.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="nv-container">
+                            </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-colors text-center">
+                            🚀 Gửi Đăng Ký Nguyện Vọng
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <section id="section-admin" class="hidden max-w-7xl mx-auto">
+            <div id="admin-login-box" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 p-6 md:p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center mx-auto text-2xl font-bold mb-2">🔑</div>
+                    <h3 class="text-xl font-bold text-slate-900">Đăng nhập Hệ thống Quản trị</h3>
+                    <p class="text-slate-500 text-sm">Chỉ dành cho cán bộ phụ trách tuyển sinh</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Tài khoản (ID)</label>
+                        <input type="text" id="admin-id" placeholder="Nhập ID" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+                        <input type="password" id="admin-pw" placeholder="Nhập mật khẩu" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button onclick="handleAdminLogin()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 rounded-lg transition-colors">
+                        Đăng Nhập
+                    </button>
+                </div>
+            </div>
+
+            <div id="admin-dashboard" class="hidden space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <p class="text-sm font-medium text-slate-500">Tổng số học sinh đăng ký</p>
+                        <p id="stat-total" class="text-3xl font-bold text-blue-700 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <p class="text-sm font-medium text-slate-500">Tổng số chỉ tiêu</p>
+                        <p class="text-3xl font-bold text-emerald-700 mt-2">585 <span class="text-sm font-normal text-slate-400">(13 lớp × 45)</span></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <p class="text-sm font-medium text-slate-500">Đã trúng tuyển</p>
+                        <p id="stat-assigned" class="text-3xl font-bold text-indigo-700 mt-2">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <p class="text-sm font-medium text-slate-500">Chưa trúng tuyển (Bị đẩy/Rớt)</p>
+                        <p id="stat-failed" class="text-3xl font-bold text-rose-600 mt-2">0</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 justify-between items-center">
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="generateMockData()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            ⚡ Tạo 100 Học Sinh Mẫu
+                        </button>
+                        <button onclick="downloadTemplate()" class="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            📋 Xuất File Excel Mẫu
+                        </button>
+                        <label class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer flex items-center">
+                            📥 Nhập Dữ Liệu Excel
+                            <input type="file" id="excel-file" accept=".xlsx, .xls" class="hidden" onchange="importExcel(event)">
+                        </label>
+                    </div>
+                    <div>
+                        <button onclick="runAdmissionAlgorithm()" class="bg-blue-700 hover:bg-blue-800 text-white px-6 py-2.5 rounded-lg font-bold text-sm tracking-wide shadow transition-colors">
+                            ⚙️ CHẠY LỌC XÉT TUYỂN (THEO NV)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-900 text-white px-6 py-4">
+                        <h4 class="font-semibold text-md">Tình trạng chỉ tiêu 6 Tổ hợp môn (Tối đa 13 lớp - Mỗi tổ hợp phân bổ ~2 lớp, riêng TH1 3 lớp)</h4>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4" id="combination-stats-container">
+                        </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="bg-slate-900 text-white px-6 py-4 flex justify-between items-center">
+                        <h4 class="font-semibold text-md">Danh Sách Chi Tiết Thí Sinh Đăng Ký</h4>
+                        <button onclick="exportResultExcel()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-semibold">
+                            📤 Xuất Kết Quả Ra Excel
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 uppercase text-xs font-bold border-b border-slate-200">
+                                    <th class="px-6 py-3">STT</th>
+                                    <th class="px-6 py-3">Họ và Tên</th>
+                                    <th class="px-6 py-3">CCCD</th>
+                                    <th class="px-6 py-3">Điểm</th>
+                                    <th class="px-6 py-3">NV1 -> NV6</th>
+                                    <th class="px-6 py-3 text-center">Kết Quả Đỗ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="student-table-body" class="divide-y divide-slate-200 text-sm">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-8 text-center text-slate-400">Chưa có dữ liệu học sinh nào. Hãy điền form hoặc nhập file excel mẫu.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 text-center py-4 text-xs border-t border-slate-800">
+        &copy; 2026 Trường THPT Huỳnh Ngọc Huệ. Phát triển hệ thống lọc nguyện vọng tự động chỉ tiêu tối đa 585 học sinh.
+    </footer>
+
+    <script>
+        // 1. Cấu hình danh sách 6 Tổ hợp môn lựa chọn của trường
+        const COMBINATIONS = {
+            "TH1": { name: "TH1 (Toán, Lý, Hóa, Anh)", max: 135 }, // 3 lớp * 45 = 135 học sinh
+            "TH2": { name: "TH2 (Toán, Hóa, Sinh, Anh)", max: 90 },  // 2 lớp * 45 = 90 học sinh
+            "TH3": { name: "TH3 (Văn, Sử, Địa, Anh)", max: 90 },    // 2 lớp * 45 = 90 học sinh
+            "TH4": { name: "TH4 (Toán, Lý, Tin, Anh)", max: 90 },    // 2 lớp * 45 = 90 học sinh
+            "TH5": { name: "TH5 (Văn, Địa, GD Pháp luật, Công nghệ)", max: 90 }, // 2 lớp
+            "TH6": { name: "TH6 (Toán, Sinh, Công nghệ, Tin)", max: 90 } // 2 lớp
+        }; // Tổng cộng đủ 13 lớp, mỗi lớp tối đa 45 em. Tổng chỉ tiêu = 585 em.
+
+        // Mảng lưu trữ danh sách học sinh đăng ký toàn cục
+        let studentList = JSON.parse(localStorage.getItem('huynhngochue_students')) || [];
+
+        // Khởi tạo trang web
+        window.onload = function() {
+            renderWishDropdowns();
+            updateAdminDashboard();
+        };
+
+        // Chuyển đổi giữa tab Đăng ký và Quản trị viên
+        function switchTab(tab) {
+            const regSection = document.getElementById('section-register');
+            const adminSection = document.getElementById('section-admin');
+            const btnReg = document.getElementById('btn-tab-register');
+            const btnAdmin = document.getElementById('btn-tab-admin');
+
+            if(tab === 'register') {
+                regSection.classList.remove('hidden');
+                adminSection.classList.add('hidden');
+                btnReg.className = "px-5 py-2.5 rounded-lg font-medium bg-white text-blue-700 shadow-sm transition-all";
+                btnAdmin.className = "px-5 py-2.5 rounded-lg font-medium bg-blue-600 hover:bg-blue-500 text-white transition-all";
+            } else {
+                regSection.classList.add('hidden');
+                adminSection.classList.remove('hidden');
+                btnAdmin.className = "px-5 py-2.5 rounded-lg font-medium bg-white text-blue-700 shadow-sm transition-all";
+                btnReg.className = "px-5 py-2.5 rounded-lg font-medium bg-blue-600 hover:bg-blue-500 text-white transition-all";
+            }
+        }
+
+        // Tạo giao diện lựa chọn 6 Nguyện vọng
+        function renderWishDropdowns() {
+            const container = document.getElementById('nv-container');
+            container.innerHTML = '';
+            for (let i = 1; i <= 6; i++) {
+                let optionsHtml = `<option value="">-- Chọn Tổ Hợp Cho NV ${i} --</option>`;
+                Object.keys(COMBINATIONS).forEach(key => {
+                    optionsHtml += `<option value="${key}">${COMBINATIONS[key].name}</option>`;
+                });
+
+                container.innerHTML += `
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nguyện vọng ${i} ${i===1?'<span class="text-blue-600">(Ưu tiên nhất)</span>':''}</label>
+                        <select id="nv${i}" required class="w-full p-2 bg-white border border-slate-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                `;
+            }
+            // Đặt mặc định các nguyện vọng tăng dần cho tiện điền form test
+            const keys = Object.keys(COMBINATIONS);
+            for(let i=1; i<=6; i++) {
+                document.getElementById(`nv${i}`).value = keys[i-1];
+            }
+        }
+
+        // Xử lý Đăng ký đơn lẻ trực tiếp qua Form
+        function handleSingleRegister(e) {
+            e.preventDefault();
+            
+            const fullname = document.getElementById('fullname').value.trim();
+            const cccd = document.getElementById('cccd').value.trim();
+            const dob = document.getElementById('dob').value;
+            const gender = document.getElementById('gender').value;
+            const score = parseFloat(document.getElementById('score').value);
+
+            // Thu thập 6 nguyện vọng
+            const nvs = [];
+            for (let i = 1; i <= 6; i++) {
+                nvs.push(document.getElementById(`nv${i}`).value);
+            }
+
+            // Kiểm tra trùng lặp nguyện vọng của chính học sinh đó
+            const uniqueNvs = new Set(nvs);
+            if(uniqueNvs.size < 6) {
+                alert("⚠️ Lỗi: Các nguyện vọng từ 1 đến 6 không được trùng lặp tổ hợp môn!");
+                return;
+            }
+
+            // Thêm vào danh sách dữ liệu chung
+            const newStudent = {
+                fullname, cccd, dob, gender, score,
+                nv1: nvs[0], nv2: nvs[1], nv3: nvs[2], nv4: nvs[3], nv5: nvs[4], nv6: nvs[5],
+                result: 'Chưa xét duyệt'
+            };
+
+            studentList.push(newStudent);
+            saveData();
+            alert(`🎉 Đăng ký thành công cho học sinh: ${fullname}! Dữ liệu đã lưu vào danh sách chờ lọc.`);
+            document.getElementById('studentForm').reset();
+            renderWishDropdowns();
+            updateAdminDashboard();
+        }
+
+        // Đăng nhập hệ thống Admin công quyền
+        function handleAdminLogin() {
+            const id = document.getElementById('admin-id').value;
+            const pw = document.getElementById('admin-pw').value;
+
+            if (id === 'ADMIN' && pw === '88888888') {
+                document.getElementById('admin-login-box').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                updateAdminDashboard();
+            } else {
+                alert('❌ Sai tài khoản hoặc mật khẩu hệ thống Admin!');
+            }
+        }
+
+        // Cập nhật giao diện Dashboard hiển thị số liệu học sinh
+        function updateAdminDashboard() {
+            document.getElementById('stat-total').innerText = studentList.length;
+            
+            let assignedCount = 0;
+            let failedCount = 0;
+            
+            // Khởi tạo bộ đếm số lượng học sinh đỗ của từng tổ hợp
+            const combCounts = {};
+            Object.keys(COMBINATIONS).forEach(k => combCounts[k] = 0);
+
+            studentList.forEach(s => {
+                if (s.result && s.result !== 'Chưa xét duyệt' && s.result !== 'Không trúng tuyển') {
+                    assignedCount++;
+                    combCounts[s.result]++;
+                } else if (s.result === 'Không trúng tuyển') {
+                    failedCount++;
+                }
+            });
+
+            document.getElementById('stat-assigned').innerText = assignedCount;
+            document.getElementById('stat-failed').innerText = failedCount;
+
+            // Hiển thị chi tiết thanh tiến độ của từng tổ hợp môn
+            const statsContainer = document.getElementById('combination-stats-container');
+            statsContainer.innerHTML = '';
+            
+            Object.keys(COMBINATIONS).forEach(k => {
+                const current = combCounts[k];
+                const max = COMBINATIONS[k].max;
+                const percent = Math.min((current / max) * 100, 100);
+                
+                statsContainer.innerHTML += `
+                    <div class="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                        <div class="flex justify-between items-center text-sm font-semibold mb-1">
+                            <span class="text-slate-700">${COMBINATIONS[k].name}</span>
+                            <span class="${current >= max ? 'text-red-600 font-bold' : 'text-emerald-600'}">${current}/${max} em</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                            <div class="h-full ${current >= max ? 'bg-red-500' : 'bg-emerald-500'}" style="width: ${percent}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Hiển thị bảng danh sách học sinh bên dưới Admin
+            const tbody = document.getElementById('student-table-body');
+            if(studentList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">Chưa có dữ liệu học sinh nào. Hãy điền form hoặc nhập file excel mẫu.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            studentList.forEach((s, idx) => {
+                let badgeClass = "bg-slate-100 text-slate-700";
+                if(s.result === 'Không trúng tuyển') badgeClass = "bg-rose-100 text-rose-700 font-medium";
+                else if(s.result !== 'Chưa xét duyệt') badgeClass = "bg-emerald-100 text-emerald-800 font-bold border border-emerald-200";
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-3 font-medium text-slate-500">${idx + 1}</td>
+                        <td class="px-6 py-3 font-semibold text-slate-900">${s.fullname}</td>
+                        <td class="px-6 py-3 text-slate-600">${s.cccd}</td>
+                        <td class="px-6 py-3 font-bold text-blue-600">${s.score}</td>
+                        <td class="px-6 py-3 text-xs text-slate-500">
+                            ${s.nv1} ➔ ${s.nv2} ➔ ${s.nv3} ➔ ${s.nv4} ➔ ${s.nv5} ➔ ${s.nv6}
+                        </td>
+                        <td class="px-6 py-3 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-xs ${badgeClass}">
+                                ${s.result === 'Chưa xét duyệt' || s.result === 'Không trúng tuyển' ? s.result : 'Đỗ ' + s.result}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // THUẬT TOÁN QUAN TRỌNG: Lọc xét tuyển nguyện vọng từ cao xuống thấp
+        function runAdmissionAlgorithm() {
+            if(studentList.length === 0) {
+                alert("❌ Không có dữ liệu học sinh để xét tuyển!");
+                return;
+            }
+
+            // Bước 1: Reset toàn bộ kết quả cũ về Trạng thái chưa xét tuyển
+            studentList.forEach(s => s.result = 'Không trúng tuyển');
+
+            // Bước 2: Khởi tạo số lượng chỉ tiêu trống của từng Tổ hợp môn
+            const slotsLeft = {};
+            Object.keys(COMBINATIONS).forEach(k => {
+                slotsLeft[k] = COMBINATIONS[k].max;
+            });
+
+            // Bước 3: Sắp xếp danh sách học sinh theo thứ tự ĐIỂM XÉT TUYỂN TỪ CAO XUỐNG THẤP
+            studentList.sort((a, b) => b.score - a.score);
+
+            // Bước 4: Duyệt qua từng học sinh để thực hiện Đẩy nguyện vọng từ NV1 -> NV6
+            studentList.forEach(student => {
+                const wishes = [student.nv1, student.nv2, student.nv3, student.nv4, student.nv5, student.nv6];
+                
+                // Quét lần lượt từ nguyện vọng 1 đến nguyện vọng 6
+                for(let i = 0; i < wishes.length; i++) {
+                    let targetCombination = wishes[i];
+                    
+                    // Nếu tổ hợp môn này vẫn còn chỉ tiêu trống, xếp học sinh vào đây luôn và dừng xét NV thấp hơn
+                    if (slotsLeft[targetCombination] > 0) {
+                        student.result = targetCombination;
+                        slotsLeft[targetCombination]--; // Giảm chỉ tiêu đi 1 slot
+                        break; 
+                    }
+                    // Nếu hết chỉ tiêu (đầy lớp), vòng lặp tự động đẩy học sinh xuống nguyện vọng i+1 tiếp theo
+                }
+            });
+
+            saveData();
+            updateAdminDashboard();
+            alert("📊 Hệ thống đã thực hiện lọc và phân phối nguyện vọng thành công dựa trên nguyên tắc ưu tiên điểm cao và đẩy chỉ tiêu từ NV1 xuống NV6!");
+        }
+
+        // Tự động tạo 100 học sinh ngẫu nhiên để test nhanh tính năng lọc
+        function generateMockData() {
+            const firstNames = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Vũ", "Đặng", "Bùi"];
+            const middleNames = ["Văn", "Thị", "Minh", "Anh", "Đức", "Hải", "Ngọc", "Tuấn"];
+            const lastNames = ["Anh", "Bình", "Chấn", "Duy", "Em", "Giang", "Hương", "Khánh", "Linh", "Nam", "Quốc", "Sơn"];
+            const genders = ["Nam", "Nữ"];
+            const combKeys = Object.keys(COMBINATIONS);
+
+            for (let i = 0; i < 100; i++) {
+                let name = `${firstNames[Math.floor(Math.random()*firstNames.length)]} ${middleNames[Math.floor(Math.random()*middleNames.length)]} ${lastNames[Math.floor(Math.random()*lastNames.length)]}`;
+                let cccd = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+                let score = parseFloat((25 + Math.random() * 24).toFixed(2)); // Điểm từ 25 đến 49
+                let gender = genders[Math.floor(Math.random()*genders.length)];
+                
+                // Tạo 6 nguyện vọng không trùng nhau ngẫu nhiên
+                let shuffled = [...combKeys].sort(() => 0.5 - Math.random());
+
+                studentList.push({
+                    fullname: name, cccd: cccd, dob: "2011-05-15", gender: gender, score: score,
+                    nv1: shuffled[0], nv2: shuffled[1], nv3: shuffled[2], nv4: shuffled[3], nv5: shuffled[4], nv6: shuffled[5],
+                    result: 'Chưa xét duyệt'
+                });
+            }
+            saveData();
+            updateAdminDashboard();
+            alert("⚡ Đã thêm thành công 100 học sinh ngẫu nhiên vào hệ thống!");
+        }
+
+        // Tải File mẫu Excel định dạng chuẩn giúp Admin nhập liệu hàng loạt
+        function downloadTemplate() {
+            const headers = [["Họ và Tên", "Số CCCD", "Ngày sinh YYYY-MM-DD", "Giới tính", "Điểm xét tuyển", "NV1", "NV2", "NV3", "NV4", "NV5", "NV6"]];
+            const sampleData = [
+                ["Nguyễn Văn Mẫu A", "012345678901", "2011-02-20", "Nam", 45.5, "TH1", "TH2", "TH3", "TH4", "TH5", "TH6"],
+                ["Trần Thị Mẫu B", "012345678902", "2011-11-12", "Nữ", 39.25, "TH2", "TH3", "TH1", "TH4", "TH5", "TH6"]
+            ];
+            
+            const ws = XLSX.utils.aoa_to_sheet(headers.concat(sampleData));
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template");
+            XLSX.writeFile(wb, "Mau_Nhap_Tuyen_Sinh_HuynhNgocHue.xlsx");
+        }
+
+        // Đọc file Excel tải lên từ máy tính của người dùng
+        function importExcel(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Chuyển đổi dữ liệu từ sheet sang dạng mảng JSON
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                // Bỏ qua dòng tiêu đề trước khi đẩy dữ liệu vào hệ thống
+                let count = 0;
+                for(let i = 1; i < jsonRows.length; i++) {
+                    const row = jsonRows[i];
+                    if(row[0] && row[1] && row[4]) { // Yêu cầu tối thiểu phải có Tên, CCCD và Điểm số
+                        studentList.push({
+                            fullname: String(row[0]).trim(),
+                            cccd: String(row[1]).trim(),
+                            dob: row[2] ? String(row[2]).trim() : "2011-01-01",
+                            gender: row[3] ? String(row[3]).trim() : "Nam",
+                            score: parseFloat(row[4]) || 0,
+                            nv1: row[5] ? String(row[5]).trim() : "TH1",
+                            nv2: row[6] ? String(row[6]).trim() : "TH2",
+                            nv3: row[7] ? String(row[7]).trim() : "TH3",
+                            nv4: row[8] ? String(row[8]).trim() : "TH4",
+                            nv5: row[9] ? String(row[9]).trim() : "TH5",
+                            nv6: row[10] ? String(row[10]).trim() : "TH6",
+                            result: 'Chưa xét duyệt'
+                        });
+                        count++;
+                    }
+                }
+                saveData();
+                updateAdminDashboard();
+                alert(`📥 Nhập thành công thêm ${count} học sinh từ file Excel!`);
+                document.getElementById('excel-file').value = ''; // Reset input file
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Xuất dữ liệu kết quả phân phối phòng/lớp nguyện vọng ra Excel
+        function exportResultExcel() {
+            if(studentList.length === 0) {
+                alert("❌ Không có dữ liệu để xuất!");
+                return;
+            }
+
+            const dataToExport = studentList.map((s, idx) => ({
+                "STT": idx + 1,
+                "Họ và Tên": s.fullname,
+                "CCCD": s.cccd,
+                "Ngày sinh": s.dob,
+                "Giới tính": s.gender,
+                "Điểm xét tuyển": s.score,
+                "NV1": s.nv1, "NV2": s.nv2, "NV3": s.nv3, "NV4": s.nv4, "NV5": s.nv5, "NV6": s.nv6,
+                "Kết Quả Trúng Tuyển": s.result
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dataToExport);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "KetQuaTuyenSinh10");
+            XLSX.writeFile(wb, "Ket_Qua_Loc_Nguyen_Vong_HuynhNgocHue.xlsx");
+        }
+
+        // Hàm tiện ích lưu dữ liệu cục bộ vào LocalStorage trình duyệt
+        function saveData() {
+            localStorage.setItem('huynhngochue_students', JSON.stringify(studentList));
+        }
+    </script>
+</body>
+</html>
